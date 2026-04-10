@@ -199,11 +199,11 @@
     <div class="control-group">
         <div class="label-row">
             <div class="label-container"><label>Complexity</label><span class="help-icon" data-help="Min/Max areas. The engine over-seeds generation to ensure your minimum is met after pruning cascades.">?</span></div>
-            <span class="val-badge" id="val-nodes">20-40</span>
+            <span class="val-badge" id="val-nodes">5-15</span>
         </div>
         <div class="range-container">
-            <div class="range-item"><label>Min</label><input type="range" id="param-nodes-min" min="5" max="40" value="20"></div>
-            <div class="range-item"><label>Max</label><input type="range" id="param-nodes-max" min="10" max="80" value="40"></div>
+            <div class="range-item"><label>Min</label><input type="range" id="param-nodes-min" min="5" max="40" value="5"></div>
+            <div class="range-item"><label>Max</label><input type="range" id="param-nodes-max" min="10" max="80" value="15"></div>
         </div>
     </div>
 
@@ -222,12 +222,12 @@
     <div class="control-group">
         <div class="label-row">
             <div class="label-container"><label>Graph Logic</label><span class="help-icon" data-help="Bias: Connection proximity preference. Degree: Max doorway limit. Space: Buffered gap between centers.">?</span></div>
-            <span class="val-badge" id="val-path-logic">5x / 4d / 15u</span>
+            <span class="val-badge" id="val-path-logic">2.5x / 4d / 10u</span>
         </div>
         <div class="range-container">
-            <div class="range-item"><label>Bias</label><input type="range" id="param-bias" min="1" max="100" value="50"></div>
+            <div class="range-item"><label>Bias</label><input type="range" id="param-bias" min="1" max="100" value="25"></div>
             <div class="range-item"><label>Degree</label><input type="range" id="param-max-degree" min="2" max="10" value="4"></div>
-            <div class="range-item"><label>Space</label><input type="range" id="param-min-dist" min="5" max="40" value="15"></div>
+            <div class="range-item"><label>Space</label><input type="range" id="param-min-dist" min="5" max="40" value="10"></div>
         </div>
     </div>
 
