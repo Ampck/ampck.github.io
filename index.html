@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Map Architect Pro v4.6.6 | Tactical Entry Suite</title>
+    <style>
+        :root {
+            --bg: #0b1120;
+            --panel: #1e293b;
+            --text: #f1f5f9;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --help: #94a3b8;
+            --border: #334155;
+        }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; display: flex; }
+        
+        #ui-panel {
+            width: 400px;
+            background: var(--panel);
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.7);
+            z-index: 100;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            border-right: 1px solid var(--border);
+        }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
+        h2 { margin: 0; color: var(--accent); font-size: 1.2rem; font-weight: 900; letter-spacing: -0.02em; }
+        
+        .tutorial-btn { background: var(--accent); color: var(--bg); border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: transform 0.1s; }
+        .tutorial-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+        h3 { font-size: 0.8rem; margin: 24px 0 12px; color: var(--help); text-transform: uppercase; letter-spacing: 0.2em; border-left: 3px solid var(--accent); padding-left: 12px; font-weight: 800; }
+        
+        .control-group { margin-bottom: 14px; background: rgba(0,0,0,0.25); padding: 16px; border-radius: 10px; border: 1px solid var(--border); }
+        .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        .label-container { display: flex; align-items: center; gap: 8px; position: relative; }
+        label { font-size: 0.75rem; color: #cbd5e1; font-weight: 700; }
+        
+        .help-icon { 
+            display: inline-block; width: 16px; height: 16px; background: #334155; 
+            color: var(--accent); border-radius: 50%; text-align: center; 
+            font-size: 10px; line-height: 16px; cursor: help; font-weight: 900;
+        }
+
+        #tooltip-box {
+            position: fixed; display: none; z-index: 5000; background: #020617; 
+            color: #e2e8f0; padding: 14px 18px; border-radius: 10px; font-size: 0.75rem; 
+            max-width: 300px; border: 1px solid var(--accent); pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); line-height: 1.6;
+        }
+
+        .val-badge { font-size: 0.7rem; background: #0f172a; padding: 2px 8px; border-radius: 5px; color: var(--accent); font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(56, 189, 248, 0.2); }
+        
+        .range-container { display: flex; flex-direction: column; gap: 8px; }
+        .range-item { display: flex; align-items: center; gap: 12px; }
+        .range-item label { font-size: 0.65rem; color: #94a3b8; width: 50px; text-align: right; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+        input[type="range"] { flex-grow: 1; cursor: pointer; accent-color: var(--accent); height: 10px; }
+        
+        .floating-window {
+            position: absolute; width: 350px;
+            background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(20px);
+            border-radius: 14px; border: 1px solid var(--border); overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7); z-index: 50;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .floating-window.collapsed { max-height: 48px; }
+        .win-header { padding: 16px 20px; background: rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; }
+        
+        .win-body { 
+            padding: 20px; 
+            box-sizing: border-box; 
+            overflow-y: auto; 
+            max-height: 520px; 
+            scrollbar-width: thin; 
+            scrollbar-color: var(--accent) transparent;
+        }
+
+        #analysis-window { top: 70px; right: 20px; }
+        #search-monitor { top: 70px; left: 420px; display: none; border-color: var(--success); }
+        #search-monitor.active { display: block; }
+
+        .stats-item { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; align-items: flex-start; }
+        .stats-item .label { color: #94a3b8; font-weight: 500; }
+        .stats-item .value { font-weight: 800; font-family: 'JetBrains Mono', monospace; text-align: right; }
+        .stats-item .target { font-size: 0.6rem; color: var(--help); display: block; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .guard-checklist { margin-top: 15px; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px; }
+        .guard-line { font-size: 0.65rem; display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .guard-line.fail { color: var(--error); }
+        .guard-line.pass { color: var(--success); }
+
+        .btn-container { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        button.action { width: 100%; padding: 14px; background: #334155; border: 1px solid #475569; border-radius: 10px; color: white; font-size: 0.8rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; transition: all 0.2s; }
+        button.action:hover { background: #475569; border-color: var(--accent); }
+        button.primary { background: var(--accent); color: #0f172a; border: none; }
+        button.primary:hover { filter: brightness(1.1); transform: scale(1.02); }
+        button.danger { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; width: 100%; }
+
+        #modal-overlay, #io-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.9); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal { background: var(--panel); width: 800px; max-height: 85vh; overflow-y: auto; padding: 50px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 30px 100px rgba(0,0,0,1); }
+        .modal h1 { color: var(--accent); margin-top: 0; font-weight: 900; }
+        .modal p { line-height: 1.7; color: #cbd5e1; }
+        .guide-section { margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .guide-section h4 { color: white; margin-bottom: 8px; }
+
+        #io-box { width: 100%; height: 300px; background: #020617; color: var(--accent); border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; border-radius: 12px; padding: 20px; resize: none; margin-bottom: 20px; }
+
+        #axis-container { position: absolute; bottom: 30px; right: 30px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        #visual-tools { position: absolute; bottom: 30px; left: 430px; z-index: 60; display: flex; flex-direction: column; gap: 12px; background: rgba(15, 23, 42, 0.9); padding: 16px; border-radius: 14px; border: 1px solid var(--border); backdrop-filter: blur(10px); min-width: 160px; }
+        #compass-canvas { width: 90px; height: 90px; background: rgba(0,0,0,0.4); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); }
+        .axis-btn { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: #1e293b; color: white; font-weight: 900; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+
+        #creation-menu { position: absolute; display: none; z-index: 2000; background: #1e293b; border: 1px solid var(--accent); border-radius: 10px; padding: 6px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); width: 200px; }
+        .menu-item { padding: 12px 14px; font-size: 0.8rem; cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 12px; color: #e2e8f0; font-weight: 600; }
+        .menu-item:hover { background: rgba(56, 189, 248, 0.2); color: white; }
+
+        #selection-panel {
+            position: absolute; bottom: 150px; right: 30px; width: 280px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
+            border-radius: 14px; border: 1px solid var(--accent); padding: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 55;
+            display: none;
+        }
+
+        #canvas-container { flex-grow: 1; position: relative; }
+        #top-toolbar { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.95); padding: 14px 40px; border-radius: 60px; border: 1px solid var(--accent); display: flex; gap: 40px; z-index: 45; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .tool-hint { font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+        .tool-hint b { color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 6px; font-weight: 900; }
+        
+        .legend { margin-top: 15px; font-size: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; color: #cbd5e1; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; display: block; border: 2px solid rgba(255,255,255,0.1); }
+
+        .vtool-label { font-size: 0.7rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.15em; }
+        .swatch { width: 26px; height: 26px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.1s; }
+        .swatch:hover { transform: scale(1.15); }
+
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+
+<div id="tooltip-box"></div>
+
+<div id="io-modal-overlay">
+    <div class="modal">
+        <h1>Topology Logic Exchange</h1>
+        <p>This JSON string stores the full architectural skeleton. It can be shared or backed up as a level design draft.</p>
+        <textarea id="io-box"></textarea>
+        <div class="btn-container" style="flex-direction:row; gap:12px;">
+            <button class="action primary" onclick="copyIO()">Copy JSON</button>
+            <button class="action primary" onclick="handleImport()">Apply Layout</button>
+            <button class="action" onclick="closeIO()">Cancel</button>
+        </div>
+        <div id="io-error" style="color:var(--error); font-size:0.85rem; margin-top:15px; display:none; font-weight:bold;">CRITICAL: Schema invalid.</div>
+    </div>
+</div>
+
+<div id="modal-overlay">
+    <div class="modal">
+        <h1>Architect Pro v4.6.6: Strategic Entry Guide</h1>
+        
+        <div class="guide-section">
+            <h4>Deep Pruning & Generation Logic</h4>
+            <p>Parameters like <b>Bias</b> and <b>Max Degree</b> control graph birth, while <b>Pruning Depth</b> recursively cleans dead ends. The engine accounts for pruning loss by over-seeding the initial generation to ensure your <b>Min Complexity</b> is met.</p>
+        </div>
+
+        <div class="guide-section">
+            <h4>Tactical Lane Disjointness</h4>
+            <p>Entry lanes are calculated using node-disjoint pathfinding. The engine finds the shortest route, identifies the <b>Entry Chokepoint</b> (node before site), and recursively removes it to find alternative routes. Paths hugging the other site are penalized to ensure true strategic separation.</p>
+        </div>
+
+        <div class="guide-section">
+            <h4>Strict Balance Guards</h4>
+            <p>The engine validates <b>every site</b> individually. A map is only "Balanced" if Defenders reach ALL sites within the 15-35% headstart range. <b>Rotation Tension</b> scales with map size, representing the ratio of Site-to-Site time vs. Average Rush time.</p>
+        </div>
+
+        <button style="background:var(--accent); border:none; padding:20px; border-radius:12px; cursor:pointer; font-weight:900; width: 100%; color: #0f172a; margin-top: 10px; font-size:1.1rem;" onclick="closeTutorial()">BEGIN ARCHITECTING</button>
+    </div>
+</div>
+
+<div id="ui-panel">
+    <div class="header-row">
+        <h2>Architect Pro v4.6.6</h2>
+        <button class="tutorial-btn" onclick="openTutorial()">Guide</button>
+    </div>
+    
+    <h3>Skeleton Density</h3>
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Complexity</label><span class="help-icon" data-help="Min/Max areas. The engine over-seeds generation to ensure your minimum is met after pruning cascades.">?</span></div>
+            <span class="val-badge" id="val-nodes">20-40</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Min</label><input type="range" id="param-nodes-min" min="5" max="40" value="20"></div>
+            <div class="range-item"><label>Max</label><input type="range" id="param-nodes-max" min="10" max="80" value="40"></div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Objectives</label><span class="help-icon" data-help="Total sites (S) and anchor hubs (A). ALL sites must independently meet timing guards.">?</span></div>
+            <span class="val-badge" id="val-site-mid">2S / 1A</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Sites</label><input type="range" id="param-site-count" min="1" max="5" value="2"></div>
+            <div class="range-item"><label>Anchor</label><input type="range" id="param-mid-count" min="0" max="4" value="1"></div>
+        </div>
+    </div>
+
+    <h3>Topological Flow</h3>
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Graph Logic</label><span class="help-icon" data-help="Bias: Connection proximity preference. Degree: Max doorway limit. Space: Buffered gap between centers.">?</span></div>
+            <span class="val-badge" id="val-path-logic">5x / 4d / 15u</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Bias</label><input type="range" id="param-bias" min="1" max="100" value="50"></div>
+            <div class="range-item"><label>Degree</label><input type="range" id="param-max-degree" min="2" max="10" value="4"></div>
+            <div class="range-item"><label>Space</label><input type="range" id="param-min-dist" min="5" max="40" value="15"></div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Pruning Depth</label><span class="help-icon" data-help="Recursively strips leaf nodes. Forces the map into efficient circuits and lanes.">?</span></div>
+            <span class="val-badge" id="val-dead-len">2 Nodes</span>
+        </div>
+        <input type="range" id="param-dead-len" min="0" max="5" value="2">
+    </div>
+
+    <h3>Vertical Design</h3>
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Vertical Weight</label><span class="help-icon" data-help="Scale: Height range. Hardn: Multiplier for Z-travel penalty.">?</span></div>
+            <span class="val-badge" id="val-vert-scale">±8u / 2.5x</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Scale</label><input type="range" id="param-vert-max" min="0" max="200" value="80"></div>
+            <div class="range-item"><label>Hardn</label><input type="range" id="param-vert-penalty" min="10" max="50" value="25"></div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Floor Snapping</label><span class="help-icon" data-help="Step: Vertical grid spacing. Post: Slight jitter to keep floors organic.">?</span></div>
+            <span class="val-badge" id="val-vert-snap">1.2 / 0.5</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Step</label><input type="range" id="param-vert-step" min="0" max="256" value="128"></div>
+            <div class="range-item"><label>Post</label><input type="range" id="param-vert-post" min="0" max="50" value="10"></div>
+        </div>
+    </div>
+
+    <h3>Advanced Search Guards</h3>
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>CT Advantage Target</label><span class="help-icon" data-help="The Golden Ratio headstart. EVERY individual site must fall into this range.">?</span></div>
+            <span class="val-badge" id="val-lead">15%-35%</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Min</label><input type="range" id="search-min-lead" min="0" max="50" value="15"></div>
+            <div class="range-item"><label>Max</label><input type="range" id="search-max-lead" min="20" max="100" value="35"></div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Rotation Tension Guard</label><span class="help-icon" data-help="Ratio: (Site-A-to-B) / (Avg Rush). Scales with map size.">?</span></div>
+            <span class="val-badge" id="val-rot-ratio">120% - 180%</span>
+        </div>
+        <div class="range-container">
+            <div class="range-item"><label>Min</label><input type="range" id="param-rot-ratio-min" min="50" max="150" value="100"></div>
+            <div class="range-item"><label>Max</label><input type="range" id="param-rot-ratio-max" min="150" max="300" value="200"></div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Lane Requirement</label><span class="help-icon" data-help="Enforces disjoint paths between spawns. Only counts unique entry chokepoints.">?</span></div>
+            <span class="val-badge" id="val-min-lanes">3 Lanes</span>
+        </div>
+        <input type="range" id="param-min-lanes" min="1" max="5" value="3">
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <div class="label-container"><label>Path Deviation Filter</label><span class="help-icon" data-help="Paths longer than X% of the primary rush are invalidated from the lane count.">?</span></div>
+            <span class="val-badge" id="val-route-dev">50%</span>
+        </div>
+        <input type="range" id="param-route-dev" min="10" max="200" value="50">
+    </div>
+
+    <div class="control-group" style="background: rgba(56, 189, 248, 0.1);">
+        <div class="label-row">
+            <div class="label-container"><label>Auto-Stop Search</label><span class="help-icon" data-help="Stops search engine when all guards are 100% satisfied.">?</span></div>
+            <input type="checkbox" id="param-stop-valid" checked>
+        </div>
+    </div>
+
+    <div class="btn-container">
+        <button class="action" id="btn-generate">GENERATE SINGLE SKELETON</button>
+        <button class="action primary" id="btn-search">SEARCH FOR IDEAL MAPS</button>
+        <button class="action" onclick="openIO()">IMPORT / EXPORT DATA</button>
+    </div>
+</div>
+
+<div id="search-monitor" class="floating-window">
+    <div class="win-header" onclick="toggleWindow('search-monitor')">
+        <span>ENGINE STATUS</span>
+        <span class="win-toggle-icon">[-]</span>
+    </div>
+    <div class="win-body">
+        <div class="label-row"><label class="pulse" style="color:var(--success); font-weight:900;">SIMULATING...</label></div>
+        <div class="stats-item">Batch Progress: <span id="stat-trials">0</span></div>
+        <div class="stats-item">Fitness Rank: <span id="fail-reason">Analyzing...</span></div>
+        
+        <div class="guard-checklist" id="guard-checklist">
+            <div class="vtool-label">Guard Status (Current Best)</div>
+            <div id="guard-ct" class="guard-line">CT Headstart: <span>-</span></div>
+            <div id="guard-rot" class="guard-line">Rot Tension: <span>-</span></div>
+            <div id="guard-lanes" class="guard-line">Lane Count: <span>-</span></div>
+            <div id="guard-conn" class="guard-line">Connectivity: <span>-</span></div>
+        </div>
+
+        <button class="danger" id="btn-cancel-search" style="margin-top:15px;">ABORT ENGINE</button>
+    </div>
+</div>
+
+<div id="analysis-window" class="floating-window">
+    <div class="win-header" onclick="toggleWindow('analysis-window')">
+        <span>ANALYSIS DASHBOARD</span>
+        <span class="win-toggle-icon">[-]</span>
+    </div>
+    <div class="win-body" id="analysis-body">
+        <div class="vtool-label">Tactical Performance vs Targets</div>
+        
+        <div class="stats-item">
+            <span class="label">CT Rush Headstart</span>
+            <span class="value" id="dash-ct">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Rotation Tension %</span>
+            <span class="value" id="dash-rot">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Strategic Entry Lanes</span>
+            <span class="value" id="dash-lanes">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Connectivity Health</span>
+            <span class="value" id="dash-conn">-</span>
+        </div>
+        
+        <div class="vtool-label" style="margin-top:20px">Generation State</div>
+        <div class="stats-item">
+            <span class="label">Room Count</span>
+            <span class="value" id="dash-count">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">S / A Balance</span>
+            <span class="value" id="dash-objective-count">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Pruning Filter</span>
+            <span class="value" id="dash-prune">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Vertical Weight</span>
+            <span class="value" id="dash-vert">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Floor Step</span>
+            <span class="value" id="dash-floor">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Door Max</span>
+            <span class="value" id="dash-degree">-</span>
+        </div>
+        <div class="stats-item">
+            <span class="label">Centrality (Avg)</span>
+            <span class="value" id="dash-centrality">-</span>
+        </div>
+
+        <h3 style="margin-top:25px; border:none; padding:0; font-size:0.7rem; color:var(--accent);">Legend</h3>
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> T-Spawn</div>
+            <div class="legend-item"><div class="dot" style="background:#3b82f6"></div> CT-Spawn</div>
+            <div class="legend-item"><div class="dot" style="background:#ef4444"></div> Bombsites</div>
+            <div class="legend-item"><div class="dot" style="background:#22c55e"></div> Hub Mid</div>
+        </div>
+    </div>
+</div>
+
+<div id="selection-panel">
+    <h3 style="margin:0 0 12px 0; border:none; padding:0; color:var(--accent); font-size:0.9rem;">Selection</h3>
+    <div id="sel-info" style="font-size: 0.65rem; color: #cbd5e1; margin-bottom: 12px;">No Selection</div>
+    <div id="node-edit-controls" style="display:none">
+        <label style="font-size:0.6rem; color:var(--help); display:block; margin-bottom:4px;">Tactical Alias</label>
+        <input type="text" id="node-name-input" placeholder="Room Name" style="width:100%; margin:0 0 12px 0; background:#0f172a; border:1px solid #475569; color:white; padding:8px; font-size:0.75rem; border-radius:8px;" oninput="handleRename(this.value)">
+        <div class="palette" style="display:flex; gap:10px; margin-bottom:15px;">
+            <div class="swatch" style="background:#f59e0b" onclick="handleRecolor('#f59e0b', 't-spawn')"></div>
+            <div class="swatch" style="background:#3b82f6" onclick="handleRecolor('#3b82f6', 'ct-spawn')"></div>
+            <div class="swatch" style="background:#ef4444" onclick="handleRecolor('#ef4444', 'site')"></div>
+            <div class="swatch" style="background:#22c55e" onclick="handleRecolor('#22c55e', 'mid-anchor')"></div>
+            <div class="swatch" style="background:#64748b" onclick="handleRecolor('#64748b', 'neutral')"></div>
+        </div>
+    </div>
+    <button class="danger" id="btn-delete" onclick="handleDelete()">DELETE OBJECT</button>
+</div>
+
+<div id="creation-menu">
+    <div class="menu-item" onclick="createNewNode('neutral')"><div class="m-dot" style="background:#64748b"></div> Neutral Area</div>
+    <div class="menu-item" onclick="createNewNode('t-spawn')"><div class="m-dot" style="background:#f59e0b"></div> T-Spawn</div>
+    <div class="menu-item" onclick="createNewNode('ct-spawn')"><div class="m-dot" style="background:#3b82f6"></div> CT-Spawn</div>
+    <div class="menu-item" onclick="createNewNode('mid-anchor')"><div class="m-dot" style="background:#22c55e"></div> Rotation Mid</div>
+    <div class="menu-item" onclick="createNewNode('site')"><div class="m-dot" style="background:#ef4444"></div> Bombsite</div>
+</div>
+
+<div id="visual-tools">
+    <label class="vtool-label">View</label>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="param-grid-toggle" checked onchange="toggleTacticalGrid()">
+        <label for="param-grid-toggle" style="font-size:0.7rem; color:white; cursor:pointer;">Tactical Grid</label>
+    </div>
+</div>
+
+<div id="axis-container">
+    <canvas id="compass-canvas"></canvas>
+    <div id="axis-buttons" style="display:flex; gap:5px;">
+        <button class="axis-btn" style="color:#ef4444" onclick="snapCamera('x')">X</button>
+        <button class="axis-btn" style="color:#22c55e" onclick="snapCamera('y')">Y</button>
+        <button class="axis-btn" style="color:#3b82f6" onclick="snapCamera('z')">Z</button>
+    </div>
+</div>
+
+<div id="canvas-container">
+    <div id="top-toolbar">
+        <div class="tool-hint"><b>CLICK</b> Inspect</div>
+        <div class="tool-hint"><b>SHIFT+CLICK</b> Link</div>
+        <div class="tool-hint"><b>ALT+CLICK</b> New</div>
+    </div>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    import { TransformControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/TransformControls.js';
+
+    let scene, camera, renderer, controls, gizmo, mapGroup, raycaster, mouse, gridHelper;
+    let nodes = [];
+    let isSearching = false;
+    let trialsCount = 0;
+    let bestFitness = -Infinity;
+    let selectedObject = null;
+    let pendingPos = null;
+
+    let isCameraTweening = false;
+    let cameraTargetPos = new THREE.Vector3();
+    let cameraStartPos = new THREE.Vector3();
+    let tweenStartTime = 0;
+    const TWEEN_DURATION = 800;
+
+    let compassScene, compassCamera, compassRenderer;
+
+    window.openTutorial = () => document.getElementById('modal-overlay').style.display = 'flex';
+    window.closeTutorial = () => document.getElementById('modal-overlay').style.display = 'none';
+    window.openIO = () => { exportJSON(); document.getElementById('io-modal-overlay').style.display = 'flex'; };
+    window.closeIO = () => document.getElementById('io-modal-overlay').style.display = 'none';
+    
+    window.toggleWindow = (id) => {
+        const win = document.getElementById(id);
+        if (win) {
+            const icon = win.querySelector('.win-toggle-icon');
+            win.classList.toggle('collapsed');
+            if(icon) icon.innerText = win.classList.contains('collapsed') ? '[+]' : '[-]';
+        }
+    };
+
+    function setupHelp() {
+        const tooltip = document.getElementById('tooltip-box');
+        document.querySelectorAll('.help-icon').forEach(icon => {
+            icon.onmouseenter = (e) => {
+                tooltip.innerText = e.target.getAttribute('data-help');
+                tooltip.style.display = 'block';
+            };
+            icon.onmousemove = (e) => {
+                tooltip.style.left = (e.clientX + 20) + 'px';
+                tooltip.style.top = (e.clientY + 10) + 'px';
+            };
+            icon.onmouseleave = () => tooltip.style.display = 'none';
+        });
+    }
+
+    function setupSliders() {
+        const binds = [
+            { ids: ['param-nodes-min', 'param-nodes-max'], badge: 'val-nodes', range: true },
+            { ids: ['param-site-count', 'param-mid-count'], badge: 'val-site-mid', custom: (s, m) => `${s}S / ${m}A` },
+            { ids: ['param-bias', 'param-max-degree', 'param-min-dist'], badge: 'val-path-logic', custom: (b, d, s) => `${(b/10).toFixed(1)}x / ${d}d / ${s}u` },
+            { ids: ['param-dead-len'], badge: 'val-dead-len', custom: (v) => `${v} Nodes` },
+            { ids: ['param-vert-max', 'param-vert-penalty'], badge: 'val-vert-scale', custom: (s, p) => `±${(s/10).toFixed(0)}u / ${(p/10).toFixed(1)}x` },
+            { ids: ['param-vert-step', 'param-vert-post'], badge: 'val-vert-snap', custom: (s, p) => `${(s/10).toFixed(1)} / ${(p/10).toFixed(1)}` },
+            { ids: ['search-min-lead', 'search-max-lead'], badge: 'val-lead', custom: (v1, v2) => `${v1}%-${v2}%` },
+            { ids: ['param-rot-ratio-min', 'param-rot-ratio-max'], badge: 'val-rot-ratio', custom: (v1, v2) => `${v1}% - ${v2}%` },
+            { ids: ['param-min-lanes'], badge: 'val-min-lanes', custom: (v) => `${v} Lanes` },
+            { ids: ['param-route-dev'], badge: 'val-route-dev', custom: (v) => `${v}%` }
+        ];
+
+        binds.forEach(b => {
+            const elements = b.ids.map(id => document.getElementById(id));
+            const badge = document.getElementById(b.badge);
+            const update = () => {
+                const vals = elements.map(el => el ? parseFloat(el.value) : 0);
+                if (badge) badge.innerText = b.custom ? b.custom(...vals) : `${vals[0]} - ${vals[1]}`;
+                refreshDashboard();
+            };
+            elements.forEach(el => { if(el) el.oninput = update; });
+            update();
+        });
+    }
+
+    window.toggleTacticalGrid = () => { if(gridHelper) gridHelper.visible = document.getElementById('param-grid-toggle').checked; };
+
+    function exportJSON() {
+        const data = nodes.map(n => ({ 
+            id: n.id, pos: { x: n.pos.x, y: n.pos.y, z: n.pos.z }, 
+            type: n.type, connections: [...n.connections], 
+            customName: n.customName, customColor: n.customColor 
+        }));
+        document.getElementById('io-box').value = JSON.stringify(data, null, 2);
+    }
+
+    window.copyIO = () => { const box = document.getElementById('io-box'); box.select(); document.execCommand('copy'); };
+
+    window.handleImport = () => {
+        const err = document.getElementById('io-error');
+        try {
+            const raw = JSON.parse(document.getElementById('io-box').value);
+            nodes = raw.map(n => ({ ...n, pos: new THREE.Vector3(n.pos.x, n.pos.y, n.pos.z) }));
+            deselectAll(); renderMap(); refreshDashboard();
+            err.style.display = 'none'; closeIO();
+        } catch(e) { err.style.display = 'block'; }
+    };
+
+    window.handleRename = (val) => {
+        if(selectedObject?.userData.type === 'node') {
+            const node = nodes.find(n => n.id === selectedObject.userData.nodeId);
+            if(node) { node.customName = val; renderMap(); refreshDashboard(); }
+        }
+    };
+
+    window.handleRecolor = (color, type) => {
+        if(selectedObject?.userData.type === 'node') {
+            const node = nodes.find(n => n.id === selectedObject.userData.nodeId);
+            if(node) {
+                node.customColor = color;
+                if(type !== 'neutral') {
+                    if(type === 'site') node.type = `site-${nodes.filter(n=>n.type.startsWith('site')).length}`;
+                    else node.type = type;
+                } else { node.type = 'neutral'; }
+                renderMap(); refreshDashboard();
+            }
+        }
+    };
+
+    class UnionFind {
+        constructor(size) { this.parent = Array.from({ length: size }, (_, i) => i); this.count = size; }
+        find(i) { if (this.parent[i] === i) return i; return this.parent[i] = this.find(this.parent[i]); }
+        union(i, j) { 
+            let rootI = this.find(i); let rootJ = this.find(j); 
+            if (rootI != rootJ) { this.parent[rootI] = rootJ; this.count--; return true; } return false; 
+        }
+    }
+
+    function init() {
+        const container = document.getElementById('canvas-container');
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b1120);
+        camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 1, 10000);
+        camera.position.set(300, 300, 300);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
+        scene.add(gridHelper);
+
+        gizmo = new TransformControls(camera, renderer.domElement);
+        
+        // PERSISTENCE FIX: Sync scene transformations back to logic state array immediately
+        gizmo.addEventListener('objectChange', () => {
+            if (gizmo.object && gizmo.object.userData.type === 'node') {
+                const node = nodes.find(n => n.id === gizmo.object.userData.nodeId);
+                if (node) { 
+                    node.pos.copy(gizmo.object.position); 
+                    refreshDashboard(); 
+                }
+            }
+        });
+
+        gizmo.addEventListener('dragging-changed', (e) => {
+            controls.enabled = !e.value;
+            if (!e.value) renderMap(); 
+        });
+        scene.add(gizmo);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+        sun.position.set(200, 400, 100);
+        scene.add(sun);
+        mapGroup = new THREE.Group();
+        scene.add(mapGroup);
+        raycaster = new THREE.Raycaster();
+        raycaster.params.Line.threshold = 10;
+        mouse = new THREE.Vector2();
+        initCompass();
+        container.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('resize', onWindowResize);
+        
+        document.getElementById('btn-generate').onclick = () => { isSearching = false; generateAndCheck(false); };
+        document.getElementById('btn-search').onclick = startSearch;
+        document.getElementById('btn-cancel-search').onclick = () => isSearching = false;
+
+        setupSliders();
+        setupHelp();
+        generateAndCheck(false);
+        animate();
+    }
+
+    function onMouseDown(e) {
+        if (gizmo.dragging || isCameraTweening) return;
+        const rect = document.getElementById('canvas-container').getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(mapGroup.children, true);
+        intersects.sort((a, b) => {
+            if (a.object.userData.type === 'node' && b.object.userData.type === 'path') return -1;
+            if (a.object.userData.type === 'path' && b.object.userData.type === 'node') return 1;
+            return a.distance - b.distance;
+        });
+        document.getElementById('creation-menu').style.display = 'none';
+        if (intersects.length > 0) {
+            const obj = intersects[0].object;
+            if (obj.userData.type === 'node') {
+                const node = nodes.find(n => n.id === obj.userData.nodeId);
+                if (e.shiftKey && selectedObject?.userData.type === 'node') {
+                    const src = nodes.find(n => n.id === selectedObject.userData.nodeId);
+                    if (src && node && src !== node) { toggleConnection(src, node); renderMap(); refreshDashboard(); }
+                } else { selectObject(obj); }
+            } else if (obj.userData.type === 'path') { selectObject(obj); }
+        } else {
+            if (e.altKey) {
+                const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                const pt = new THREE.Vector3();
+                raycaster.ray.intersectPlane(plane, pt);
+                pendingPos = pt;
+                const menu = document.getElementById('creation-menu');
+                menu.style.display = 'block'; menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
+            } else if (!e.target.closest('#selection-panel') && !e.target.closest('.floating-window') && !e.target.closest('#creation-menu')) { deselectAll(); }
+        }
+    }
+
+    function selectObject(obj) {
+        selectedObject = obj;
+        const panel = document.getElementById('selection-panel');
+        const info = document.getElementById('sel-info');
+        const edit = document.getElementById('node-edit-controls');
+        panel.style.display = 'block';
+        if (obj.userData.type === 'node') {
+            const node = nodes.find(n => n.id === obj.userData.nodeId);
+            gizmo.attach(obj);
+            info.innerText = `Inspect: ${node.customName || ('ID '+node.id)} | Role: ${node.type.toUpperCase()}`;
+            document.getElementById('node-name-input').value = node.customName || "";
+            edit.style.display = 'block';
+        } else {
+            gizmo.detach();
+            info.innerText = `Path Link: Node ${obj.userData.n1} ↔ ${obj.userData.n2}`;
+            edit.style.display = 'none';
+        }
+        renderMap();
+    }
+
+    function deselectAll() { selectedObject = null; gizmo.detach(); document.getElementById('selection-panel').style.display = 'none'; renderMap(); }
+
+    window.createNewNode = (type) => {
+        const id = Math.max(...nodes.map(n => n.id), 0) + 1;
+        const actualType = type === 'site' ? `site-${nodes.filter(n => n.type.startsWith('site')).length}` : type;
+        nodes.push({ id, pos: pendingPos.clone(), type: actualType, connections: [], customName: null, customColor: null });
+        document.getElementById('creation-menu').style.display = 'none'; renderMap(); refreshDashboard();
+    };
+
+    window.handleDelete = () => {
+        if (!selectedObject) return;
+        if (selectedObject.userData.type === 'node') {
+            const nid = selectedObject.userData.nodeId;
+            nodes = nodes.filter(n => n.id !== nid);
+            nodes.forEach(n => n.connections = n.connections.filter(id => id !== nid));
+        } else {
+            const { n1, n2 } = selectedObject.userData;
+            const node1 = nodes.find(n => n.id === n1), node2 = nodes.find(n => n.id === n2);
+            if(node1) node1.connections = node1.connections.filter(id => id !== n2);
+            if(node2) node2.connections = node2.connections.filter(id => id !== n1);
+        }
+        deselectAll(); renderMap(); refreshDashboard();
+    };
+
+    function toggleConnection(n1, n2) {
+        if (n1.connections.includes(n2.id)) {
+            n1.connections = n1.connections.filter(id => id !== n2.id); 
+            n2.connections = n2.connections.filter(id => id !== n1.id);
+        } else { 
+            if(n1.connections.length < 10 && n2.connections.length < 10) {
+                n1.connections.push(n2.id); 
+                n2.connections.push(n1.id); 
+            }
+        }
+    }
+
+    async function startSearch() {
+        if (isSearching) return;
+        isSearching = true; trialsCount = 0; bestFitness = -Infinity; deselectAll();
+        
+        const monitor = document.getElementById('search-monitor');
+        const trialsEl = document.getElementById('stat-trials');
+        const failEl = document.getElementById('fail-reason');
+        const stopOnValidEl = document.getElementById('param-stop-valid');
+        const stopOnValid = stopOnValidEl ? stopOnValidEl.checked : false;
+
+        if (monitor) monitor.classList.add('active');
+
+        while (isSearching) {
+            for(let b=0; b<50; b++) {
+                trialsCount++;
+                const res = generateAndCheck(true);
+                if (res.fitness > bestFitness) {
+                    bestFitness = res.fitness; nodes = res.nodes; 
+                    renderMap(); 
+                    refreshDashboard(res.metrics);
+                    if (failEl) failEl.innerText = `${(bestFitness).toFixed(1)} (Rank)`;
+                    updateChecklist(res.metrics);
+                    if (res.isValid && stopOnValid) { isSearching = false; break; }
+                }
+            }
+            if(trialsEl) trialsEl.innerText = trialsCount.toLocaleString();
+            await new Promise(r => setTimeout(r, 0));
+        }
+        if (monitor) monitor.classList.remove('active');
+    }
+
+    function generateAndCheck(silent) {
+        const nMin = parseInt(document.getElementById('param-nodes-min').value);
+        const nMax = parseInt(document.getElementById('param-nodes-max').value);
+        const siteCount = parseInt(document.getElementById('param-site-count').value);
+        const midCount = parseInt(document.getElementById('param-mid-count').value);
+        const bias = parseFloat(document.getElementById('param-bias').value) / 10;
+        const minDist = parseFloat(document.getElementById('param-min-dist').value);
+        const maxDeg = parseInt(document.getElementById('param-max-degree').value);
+        const vMax = parseFloat(document.getElementById('param-vert-max').value);
+        const vStep = parseFloat(document.getElementById('param-vert-step').value);
+        const vPost = parseFloat(document.getElementById('param-vert-post').value);
+        const pruningDepth = parseInt(document.getElementById('param-dead-len').value);
+
+        let finalNodes = [];
+        let attemptsCount = 0;
+
+        while(attemptsCount < 15) {
+            attemptsCount++;
+            let tempNodes = [];
+            let seedCount = Math.floor(nMax * 1.5) + (pruningDepth * 5);
+            
+            const roles = ['t-spawn', 'ct-spawn'];
+            for(let i=0; i<siteCount; i++) roles.push('site');
+            for(let i=0; i<midCount; i++) roles.push('mid-anchor');
+
+            for (let i = 0; i < seedCount; i++) {
+                const type = (i < roles.length) ? (roles[i] === 'site' ? `site-${i-2}` : roles[i]) : 'neutral';
+                let pos, attempts = 0;
+                do {
+                    const x = (Math.random() - 0.5) * 320, z = (Math.random() - 0.5) * 320;
+                    let rawY = (Math.random() - 0.5) * vMax;
+                    let y = (vStep > 0) ? Math.round(rawY / vStep) * vStep : rawY;
+                    y += (Math.random() - 0.5) * vPost;
+                    pos = new THREE.Vector3(x, y, (type === 't-spawn' ? -150 : (type === 'ct-spawn' ? 150 : z)));
+                    attempts++;
+                } while (tempNodes.some(n => n.pos.distanceTo(pos) < minDist) && attempts < 50);
+                tempNodes.push({ id: i, pos, type, connections: [], customName: null, customColor: null });
+            }
+
+            const uf = new UnionFind(tempNodes.length);
+            for (let i = 0; i < tempNodes.length; i++) {
+                const others = [...tempNodes].filter((_, idx) => idx !== i).sort((a,b) => tempNodes[i].pos.distanceTo(a.pos) - tempNodes[i].pos.distanceTo(b.pos));
+                for (let j = 0; j < 6; j++) {
+                    if (tempNodes[i].connections.length >= maxDeg) break;
+                    if (Math.random() < Math.pow(0.5, j * bias) || j === 0) {
+                        const otherNode = others[j];
+                        if (!tempNodes[i].connections.includes(otherNode.id) && otherNode.connections.length < maxDeg) {
+                            tempNodes[i].connections.push(otherNode.id);
+                            tempNodes[otherNode.id].connections.push(tempNodes[i].id);
+                            uf.union(i, tempNodes.indexOf(otherNode));
+                        }
+                    }
+                }
+            }
+
+            while (uf.count > 1) {
+                const roots = {};
+                tempNodes.forEach((n, idx) => { const r = uf.find(idx); if(!roots[r]) roots[r] = []; roots[r].push(n); });
+                const keys = Object.keys(roots); if(keys.length < 2) break;
+                const c1 = roots[keys[0]], c2 = roots[keys[1]];
+                let bp = [c1[0], c2[0]], bd = Infinity;
+                c1.forEach(a => c2.forEach(b => { let d = a.pos.distanceTo(b.pos); if(d < bd) { bd = d; bp = [a, b]; }}));
+                bp[0].connections.push(bp[1].id); bp[1].connections.push(bp[0].id); uf.union(tempNodes.indexOf(bp[0]), tempNodes.indexOf(bp[1]));
+            }
+
+            if(pruningDepth > 0) {
+                for(let layer=0; layer < pruningDepth; layer++) {
+                    let changed = true;
+                    while(changed) {
+                        changed = false;
+                        let toRemove = [];
+                        tempNodes.forEach(n => {
+                            const isObjective = n.type !== 'neutral' && n.type !== 'mid-anchor';
+                            if(!isObjective && n.connections.length <= 1) toRemove.push(n.id);
+                        });
+                        if(toRemove.length > 0) {
+                            tempNodes = tempNodes.filter(n => !toRemove.includes(n.id));
+                            tempNodes.forEach(n => n.connections = n.connections.filter(cid => !toRemove.includes(cid)));
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            if(tempNodes.length >= nMin && tempNodes.length <= nMax) {
+                finalNodes = tempNodes;
+                break; 
+            }
+        }
+
+        const metrics = calculateMetrics(finalNodes);
+        const minL = parseInt(document.getElementById('param-min-lanes').value);
+        const minCT = parseInt(document.getElementById('search-min-lead').value) / 100;
+        const maxCT = parseInt(document.getElementById('search-max-lead').value) / 100;
+        const minRotRatio = parseInt(document.getElementById('param-rot-ratio-min').value) / 100;
+        const maxRotRatio = parseInt(document.getElementById('param-rot-ratio-max').value) / 100;
+        
+        const isValid = metrics.ctPass && (metrics.rotationRatio >= minRotRatio && metrics.rotationRatio <= maxRotRatio) && metrics.lanes >= minL && finalNodes.length >= nMin && metrics.isConnected;
+        let fitness = 100 - (Math.abs(metrics.avgAdv - (minCT+maxCT)/2) * 200);
+        if(!metrics.ctPass) fitness -= 400;
+        if(!metrics.isConnected) fitness -= 800;
+
+        if (!silent) { nodes = finalNodes; renderMap(); refreshDashboard(metrics); updateChecklist(metrics); }
+        return { nodes: finalNodes, fitness, isValid, metrics };
+    }
+
+    function calculateMetrics(nodeList) {
+        if(nodeList.length === 0) return { avgAdv: 0, rotationRatio: 0, lanes: 0, isConnected: false, ctPass: false };
+        const nodeMap = new Map(); nodeList.forEach(n => nodeMap.set(n.id, n));
+        const tS = nodeList.find(n => n.type === 't-spawn');
+        const ctS = nodeList.find(n => n.type === 'ct-spawn');
+        const sites = nodeList.filter(n => n.type.startsWith('site'));
+        if (!tS || !ctS || sites.length === 0) return { avgAdv: 0, rotationRatio: 0, lanes: 0, isConnected: false, ctPass: false };
+
+        const penalty = parseFloat(document.getElementById('param-vert-penalty').value) / 10;
+        const routeDev = parseFloat(document.getElementById('param-route-dev').value) / 100;
+
+        const dijkstra = (startId, targetSiteId = null, activeNodes = null) => {
+            const list = activeNodes || nodeList;
+            const map = new Map(); list.forEach(n => map.set(n.id, n));
+            const dists = {}; list.forEach(n => dists[n.id] = Infinity); dists[startId] = 0;
+            const q = new Set(list.map(n => n.id));
+            while (q.size > 0) {
+                let uId = null, minD = Infinity;
+                q.forEach(id => { if(dists[id] < minD) { minD = dists[id]; uId = id; }});
+                if (uId === null) break; q.delete(uId);
+                const u = map.get(uId);
+                u.connections.forEach(vId => {
+                    const v = map.get(vId); if(!v) return;
+                    let weight = u.pos.distanceTo(v.pos) * (Math.abs(u.pos.y - v.pos.y) > 1.5 ? penalty : 1.0);
+                    if(targetSiteId !== null) {
+                        sites.forEach(otherSite => {
+                            if(otherSite.id !== targetSiteId) {
+                                if(v.pos.distanceTo(otherSite.pos) < v.pos.distanceTo(nodeMap.get(targetSiteId).pos)) weight *= 3.0;
+                            }
+                        });
+                    }
+                    if (dists[uId] + weight < dists[vId]) dists[vId] = dists[uId] + weight;
+                });
+            } return dists;
+        };
+
+        const tGlobal = dijkstra(tS.id), ctGlobal = dijkstra(ctS.id);
+        const minGuardLead = parseInt(document.getElementById('search-min-lead').value) / 100;
+        const maxGuardLead = parseInt(document.getElementById('search-max-lead').value) / 100;
+        
+        let totalAdv = 0, siteAdvPassCount = 0, avgTArrival = 0;
+        sites.forEach(s => {
+            const dt = tGlobal[s.id], dct = ctGlobal[s.id];
+            const siteAdv = (1 - (dct/dt));
+            totalAdv += siteAdv;
+            avgTArrival += dt;
+            if(siteAdv >= minGuardLead && siteAdv <= maxGuardLead) siteAdvPassCount++;
+        });
+        
+        const avgRushTime = avgTArrival / sites.length;
+        const ctPass = (siteAdvPassCount === sites.length);
+
+        let totalLanes = 0;
+        sites.forEach(s => {
+            let siteLanes = 0;
+            let currentPool = nodeList.map(n => ({...n, pos: n.pos.clone(), connections: [...n.connections]}));
+            while(siteLanes < 5) {
+                const dResult = dijkstraWithInternalPenalty(tS.id, s.id, currentPool, sites);
+                const path = reconstructPathFromPrev(tS.id, s.id, dResult.prev);
+                if(!path || path.length < 2 || dResult.dists[s.id] > avgRushTime * (1 + routeDev)) break;
+                const entryNodeId = path[path.length - 2];
+                siteLanes++; totalLanes++;
+                currentPool = currentPool.filter(n => n.id !== entryNodeId);
+                currentPool.forEach(n => n.connections = n.connections.filter(cid => cid !== entryNodeId));
+            }
+        });
+
+        let rotationRatio = 0;
+        if(sites.length > 1) rotationRatio = dijkstra(sites[0].id)[sites[1].id] / Math.max(avgRushTime, 1);
+
+        return { 
+            avgAdv: totalAdv / sites.length, isConnected: siteAdvPassCount > 0, ctPass, rotationRatio,
+            lanes: Math.max(totalLanes, 1), count: nodeList.length,
+            centrality: (nodeList.reduce((acc, n) => acc + n.connections.length, 0) / Math.max(nodeList.length, 1)).toFixed(1)
+        };
+    }
+
+    function dijkstraWithInternalPenalty(startId, targetId, nodeList, sites) {
+        const nodeMap = new Map(); nodeList.forEach(n => nodeMap.set(n.id, n));
+        const dists = {}; const prev = {}; 
+        nodeList.forEach(n => { dists[n.id] = Infinity; prev[n.id] = null; });
+        if(!nodeMap.has(startId)) return { dists, prev };
+        dists[startId] = 0;
+        const q = new Set(nodeList.map(n => n.id));
+        while (q.size > 0) {
+            let uId = null, minD = Infinity;
+            q.forEach(id => { if(dists[id] < minD) { minD = dists[id]; uId = id; }});
+            if (uId === null) break; q.delete(uId);
+            const u = nodeMap.get(uId);
+            u.connections.forEach(vId => {
+                const v = nodeMap.get(vId); if(!v) return;
+                let weight = u.pos.distanceTo(v.pos);
+                sites.forEach(os => {
+                    if(os.id !== targetId && v.pos.distanceTo(os.pos) < v.pos.distanceTo(nodeMap.get(targetId).pos)) weight *= 4.0;
+                });
+                if (dists[uId] + weight < dists[vId]) { dists[vId] = dists[uId] + weight; prev[vId] = uId; }
+            });
+        }
+        return { dists, prev };
+    }
+
+    function reconstructPathFromPrev(startId, endId, prev) {
+        const path = []; let curr = endId;
+        while(curr !== null) { path.push(curr); if(curr === startId) break; curr = prev[curr]; }
+        return path.reverse().includes(startId) ? path : null;
+    }
+
+    function refreshDashboard(m = null) {
+        const cur = m || calculateMetrics(nodes);
+        const safeSet = (id, val, tMin, tMax) => {
+            const el = document.getElementById(id);
+            if (el) {
+                const isPass = val >= tMin && val <= tMax;
+                el.innerHTML = `${val}% <span class="target">Target: ${tMin}-${tMax}%</span>`;
+                el.style.color = isPass ? 'var(--success)' : 'var(--error)';
+            }
+        };
+
+        const t_min = parseInt(document.getElementById('search-min-lead').value), t_max = parseInt(document.getElementById('search-max-lead').value);
+        safeSet('dash-ct', Math.round(cur.avgAdv*100), t_min, t_max);
+
+        const r_min = parseInt(document.getElementById('param-rot-ratio-min').value), r_max = parseInt(document.getElementById('param-rot-ratio-max').value);
+        safeSet('dash-rot', Math.round(cur.rotationRatio*100), r_min, r_max);
+
+        const lEl = document.getElementById('dash-lanes'), l_t = parseInt(document.getElementById('param-min-lanes').value);
+        if(lEl) { lEl.innerHTML = `${cur.lanes} <span class="target">Strict Req: ${l_t}</span>`; lEl.style.color = cur.lanes >= l_t ? 'var(--success)' : 'var(--error)'; }
+
+        const cEl = document.getElementById('dash-conn'); if(cEl) { cEl.innerHTML = cur.isConnected ? "STABLE" : "FAIL"; cEl.style.color = cur.isConnected ? 'var(--success)' : 'var(--error)'; }
+        const cntEl = document.getElementById('dash-count'), c_min = parseInt(document.getElementById('param-nodes-min').value), c_max = parseInt(document.getElementById('param-nodes-max').value);
+        if(cntEl) { cntEl.innerHTML = `${nodes.length} <span class="target">Range: ${c_min}-${c_max}</span>`; cntEl.style.color = (nodes.length >= c_min && nodes.length <= c_max) ? 'white' : 'var(--error)'; }
+
+        if(document.getElementById('dash-objective-count')) document.getElementById('dash-objective-count').innerText = `${document.getElementById('param-site-count').value}S / ${document.getElementById('param-mid-count').value}A`;
+        if(document.getElementById('dash-prune')) document.getElementById('dash-prune').innerText = document.getElementById('param-dead-len').value + " Recursion";
+        if(document.getElementById('dash-vert')) document.getElementById('dash-vert').innerText = (document.getElementById('param-vert-penalty').value/10).toFixed(1) + "x Penalty";
+        if(document.getElementById('dash-floor')) document.getElementById('dash-floor').innerText = document.getElementById('param-vert-step').value + "u Step";
+        if(document.getElementById('dash-centrality')) document.getElementById('dash-centrality').innerText = cur.centrality;
+    }
+
+    function updateChecklist(m) {
+        const ctL = document.getElementById('guard-ct'), rotL = document.getElementById('guard-rot'), laneL = document.getElementById('guard-lanes'), connL = document.getElementById('guard-conn');
+        if (!ctL || !rotL || !laneL || !connL) return;
+        const minCT = parseInt(document.getElementById('search-min-lead').value), maxCT = parseInt(document.getElementById('search-max-lead').value);
+        const curCT = Math.round(m.avgAdv*100);
+        ctL.querySelector('span').innerText = `${curCT}% ${m.ctPass ? '[OK]' : '[SITE FAIL]'}`;
+        ctL.className = `guard-line ${m.ctPass ? 'pass' : 'fail'}`;
+
+        const minR = parseInt(document.getElementById('param-rot-ratio-min').value), maxR = parseInt(document.getElementById('param-rot-ratio-max').value), curR = Math.round(m.rotationRatio*100);
+        rotL.querySelector('span').innerText = `${curR}% (${minR}-${maxR}%)`; rotL.className = `guard-line ${curR >= minR && curR <= maxR ? 'pass' : 'fail'}`;
+
+        const minL = parseInt(document.getElementById('param-min-lanes').value);
+        laneL.querySelector('span').innerText = `${m.lanes} Chokes (${minL}+)`; laneL.className = `guard-line ${m.lanes >= minL ? 'pass' : 'fail'}`;
+        connL.querySelector('span').innerText = m.isConnected ? "PASS" : "FAIL"; connL.className = `guard-line ${m.isConnected ? 'pass' : 'fail'}`;
+    }
+
+    function renderMap() {
+        mapGroup.clear();
+        nodes.forEach(node => {
+            const geo = new THREE.IcosahedronGeometry(3.5, 1);
+            let color = 0x64748b;
+            if (node.type === 't-spawn') color = 0xf59e0b;
+            else if (node.type === 'ct-spawn') color = 0x3b82f6;
+            else if (node.type.startsWith('site')) color = 0xef4444;
+            else if (node.type === 'mid-anchor') color = 0x22c55e;
+            if (node.customColor) color = parseInt(node.customColor.replace('#', '0x'));
+            
+            const isSelected = selectedObject?.userData.type === 'node' && selectedObject.userData.nodeId === node.id;
+            const mat = new THREE.MeshStandardMaterial({ color: isSelected ? 0xffffff : color, emissive: isSelected ? 0xffffff : color, emissiveIntensity: isSelected ? 0.7 : 0.2 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(node.pos);
+            mesh.userData = { type: 'node', nodeId: node.id };
+            mapGroup.add(mesh);
+
+            node.connections.forEach(tId => {
+                const target = nodes.find(n => n.id === tId);
+                if (target && tId > node.id) {
+                    const isPathSelected = selectedObject?.userData.type === 'path' && 
+                                           ((selectedObject.userData.n1 === node.id && selectedObject.userData.n2 === tId) || 
+                                            (selectedObject.userData.n1 === tId && selectedObject.userData.n2 === node.id));
+                    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([node.pos, target.pos]), new THREE.LineBasicMaterial({ color: isPathSelected ? 0x00ffff : 0x334155, transparent: true, opacity: isPathSelected ? 1.0 : 0.6 }));
+                    line.userData = { type: 'path', n1: node.id, n2: tId };
+                    mapGroup.add(line);
+                }
+            });
+
+            let labelStr = node.customName || (node.type.startsWith('site') ? String.fromCharCode(65 + parseInt(node.type.split('-')[1] || 0)) : "");
+            if(node.type === 't-spawn') labelStr = "T"; if(node.type === 'ct-spawn') labelStr = "CT";
+            if(labelStr) {
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 128; canvas.height = 128;
+                ctx.fillStyle = 'white'; ctx.font = 'bold 80px Inter'; ctx.textAlign = 'center'; ctx.fillText(labelStr, 64, 90);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
+                sprite.position.copy(node.pos).add(new THREE.Vector3(0, 15, 0));
+                sprite.userData = { type: 'label' };
+                mapGroup.add(sprite);
+            }
+        });
+        if (selectedObject?.userData.type === 'node') {
+            const match = mapGroup.children.find(c => c.userData.nodeId === selectedObject.userData.nodeId);
+            if (match) gizmo.attach(match);
+        }
+    }
+
+    window.snapCamera = (axis) => {
+        const d = 500; cameraStartPos.copy(camera.position); cameraTargetPos.set(0, 0, 0);
+        if (axis === 'x') cameraTargetPos.set(d, 0, 0);
+        else if (axis === 'y') cameraTargetPos.set(0, d, 0);
+        else if (axis === 'z') cameraTargetPos.set(0, 0, d);
+        isCameraTweening = true; tweenStartTime = performance.now(); controls.enabled = false;
+    };
+
+    function initCompass() {
+        const canvas = document.getElementById('compass-canvas');
+        compassRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        compassRenderer.setSize(90, 90);
+        compassScene = new THREE.Scene();
+        compassCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        compassCamera.position.set(0, 0, 5);
+        compassScene.add(new THREE.AxesHelper(3));
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (isCameraTweening) {
+            const elapsed = performance.now() - tweenStartTime;
+            const t = Math.min(elapsed / TWEEN_DURATION, 1);
+            const ease = t * (2 - t);
+            camera.position.lerpVectors(cameraStartPos, cameraTargetPos, ease);
+            controls.target.lerp(new THREE.Vector3(0,0,0), ease);
+            if (t >= 1) { isCameraTweening = false; controls.enabled = true; }
+        }
+        mapGroup.children.forEach(c => {
+            if (c.userData.type === 'label') {
+                const dist = camera.position.distanceTo(c.position);
+                const s = dist / 35; c.scale.set(s, s, 1);
+            }
+        });
+        controls.update();
+        renderer.render(scene, camera);
+        if (compassCamera && compassRenderer) {
+            compassCamera.position.copy(camera.position).sub(controls.target).setLength(6);
+            compassCamera.lookAt(0, 0, 0); compassRenderer.render(compassScene, compassCamera);
+        }
+    }
+
+    function onWindowResize() {
+        const container = document.getElementById('canvas-container');
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    init();
+</script>
+</body>
+</html>
